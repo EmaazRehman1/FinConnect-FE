@@ -17,10 +17,11 @@ import {
   Calendar,
   XCircle,
   CheckCircle,
-  Loader2
+  Loader2,
+  List
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-
+import { TransactionsDialog } from '@/components/AdminDashboard/TransactionDialog';
 interface User {
   _id: string;
   fullName: string;
@@ -35,10 +36,13 @@ import { Toaster } from 'react-hot-toast';
 
 import finteckApi from '@/axios/Axios';
 import { useUser } from '@/context/UserContextProvider';
+import { set } from 'date-fns';
 export function UserManagement() {
   
   const { accessToken } = useUser()
   const [users, setUsers] = useState<User[]>()
+  const [modalOpen,setModalOpen]=useState(false)
+  const [transactions,setTransactions]=useState<any[]>([])
 
   const cancelSubscription = (userId: string) => {
     setUsers(users?.map(user =>
@@ -94,6 +98,32 @@ export function UserManagement() {
     }
   };
 
+  const handleUserTransaction = (userId: string) => {
+    setTransactions([])
+    getUserTransactions(userId)
+    setModalOpen(true)
+
+
+   
+  }
+
+  const getUserTransactions=async (id:string)=>{
+    setLoading
+    try {
+      const response = await finteckApi.get(`/account/transactions/${id}`, {
+
+      });
+      // console.log(response.data);
+      setTransactions(response.data)
+
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching user transactions:", error);
+    }finally{
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     getUsers()
   }, [])
@@ -137,6 +167,14 @@ export function UserManagement() {
   return (
     <div className="p-6">
       <Toaster/>
+      {modalOpen && (
+        <TransactionsDialog
+        userTransactions={transactions}
+        onOpenChange={setModalOpen}
+        open={modalOpen}
+        loading={loading}
+      />
+      )}
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">User Management</h2>
       </div>
@@ -183,30 +221,26 @@ export function UserManagement() {
                 <TableCell>
                   {getStatusBadge(user?.subscriptionStatus)}
                 </TableCell>
-                {/* <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    {new Date(user.joinDate).toLocaleDateString()}
-                  </div>
-                </TableCell> */}
-                {/* <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-muted-foreground" />
-                    {new Date(user.lastActive).toLocaleDateString()}
-                  </div>
-                </TableCell> */}
+                
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
+                      <Button variant="ghost" size="icon" className='cursor-pointer'>
+                        <MoreVertical className="h-4 w-4 cursor-pointer" />
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
+                    <DropdownMenuContent align="end" >
+                      <DropdownMenuItem
+                           onClick={()=>handleUserTransaction(user._id)}
+                          className="text-gray-600 cursor-pointer"
+                        >
+                          <List className="mr-2 h-4 w-4" />
+                          View Transactions
+                        </DropdownMenuItem>
                       {user?.subscriptionStatus === 'active' ? (
                         <DropdownMenuItem
                           onClick={() => cancelSubs(user._id)}
-                          className="text-destructive"
+                          className="text-destructive cursor-pointer"
                         >
                           <XCircle className="mr-2 h-4 w-4" />
                           Cancel Subscription
@@ -214,12 +248,13 @@ export function UserManagement() {
                       ) : (
                         <DropdownMenuItem
                           onClick={() => activateSubscription(user._id)}
-                          className="text-green-600"
+                          className="text-green-600 cursor-pointer"
                         >
                           <CheckCircle className="mr-2 h-4 w-4" />
                           Activate Subscription
                         </DropdownMenuItem>
                       )}
+                      
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

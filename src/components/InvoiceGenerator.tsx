@@ -438,13 +438,6 @@ const styles = StyleSheet.create({
 
 const Invoice: React.FC<InvoiceProps> = ({ 
   transactions = [],
-  companyInfo = {
-    name: "Financial Services, Inc.",
-    address: "123 Finance Street, New York, NY 10001",
-    phone: "+1 (555) 123-4567",
-    email: "info@financialservices.com",
-    website: "www.financialservices.com"
-  },
   invoiceInfo = {
     number: `INV-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
     date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
